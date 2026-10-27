@@ -61,12 +61,38 @@ main{flex:1}
 .disclosure{margin:-6px 0 0;font-size:13px;line-height:1.5;color:var(--on-dark-2);text-align:center}
 .disclosure a{color:#fff;font-weight:600}
 
+/* Hero motion: entrance uses `translate`, CTA breath uses `scale`, so neither fights .cta:active's transform */
+.cta{position:relative;isolation:isolate}
+.cta::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;box-shadow:0 0 26px 4px rgba(184,240,74,.55);opacity:0;pointer-events:none}
+#cta-amount{display:inline-block}
+@media (prefers-reduced-motion:no-preference){
+  .hero-media,.hero-copy,.amount-box,.hero>.cta,.checks,.disclosure{animation:hero-rise .7s cubic-bezier(.22,1,.36,1) both}
+  .hero-copy{animation-delay:.1s}
+  .amount-box{animation-delay:.2s}
+  .hero>.cta{animation:hero-rise .7s cubic-bezier(.22,1,.36,1) .3s both,cta-breathe 2.8s ease-in-out 1.2s infinite}
+  .hero>.cta::before{animation:cta-glow 2.8s ease-in-out 1.2s infinite}
+  .hero>.cta svg{animation:cta-nudge 2.8s ease-in-out 1.2s infinite}
+  .checks{animation-delay:.4s}
+  .disclosure{animation-delay:.45s}
+  .hero-pills .pill,.pill-bbb{animation:pill-pop .5s cubic-bezier(.34,1.56,.64,1) both}
+  .hero-pills .pill:nth-child(1){animation-delay:.45s}
+  .hero-pills .pill:nth-child(2){animation-delay:.55s}
+  .pill-bbb{animation-delay:.65s}
+  #cta-amount.bump{animation:amount-bump .35s cubic-bezier(.34,1.56,.64,1)}
+}
+@keyframes hero-rise{from{opacity:0;translate:0 14px}to{opacity:1;translate:0 0}}
+@keyframes pill-pop{from{opacity:0;scale:.85;translate:0 6px}to{opacity:1;scale:1;translate:0 0}}
+@keyframes cta-breathe{0%,100%{scale:1}50%{scale:1.03}}
+@keyframes cta-glow{0%,100%{opacity:0}50%{opacity:1}}
+@keyframes cta-nudge{0%,100%{translate:0 0}50%{translate:3px 0}}
+@keyframes amount-bump{40%{scale:1.15}}
+
 /* Stats */
 .stats-wrap{padding:0 16px 12px;background:linear-gradient(var(--navy) 0 52px,var(--ground) 52px)}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#fff;border-radius:22px;box-shadow:0 16px 36px rgba(14,26,43,.18),0 2px 6px rgba(14,26,43,.08)}
 .stat{display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px 6px 18px;text-align:center}
 .stat+.stat{border-left:1px solid #EEF1F4}
-.stat-value{font-family:var(--display);font-size:26px;line-height:1;font-weight:700;letter-spacing:-.5px}
+.stat-value{font-family:var(--display);font-size:26px;line-height:1;font-weight:700;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
 .stat-label{font-size:12px;line-height:1.3;color:var(--muted)}
 .badge{display:flex;justify-content:center;align-items:center;flex-shrink:0;width:44px;height:44px;border-radius:14px}
 .badge.sm{width:40px;height:40px;border-radius:12px}
@@ -177,6 +203,66 @@ main{flex:1}
 .footer p{margin:0}
 .footer a{color:#fff}
 .footer-links{display:flex;gap:20px}
+
+/* Scroll reveal: app.js adds .reveal to each block (motion allowed only), then .is-visible once it
+   scrolls into view. Staggered children get --i (their index) from app.js. */
+.reveal{--rv-delay:0s;--i:0}
+.rating-value,.cost-total-value{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:no-preference){
+  /* Hidden until revealed */
+  :is(.section>h2,.secure-note,.fine,.cost,.ratings,.review).reveal:not(.is-visible),
+  .stats-wrap.reveal:not(.is-visible) .stats,
+  .steps-wrap.reveal:not(.is-visible) :is(.steps-line,.step-node,.step-card),
+  .bento.reveal:not(.is-visible)>*,
+  .faq.reveal:not(.is-visible)>details,
+  .final.reveal:not(.is-visible)>*{opacity:0}
+
+  /* Single blocks rise as one */
+  :is(.section>h2,.secure-note,.fine,.cost,.ratings,.review).is-visible{animation:hero-rise .7s cubic-bezier(.22,1,.36,1) var(--rv-delay) both}
+
+  /* Stats */
+  .stats-wrap.is-visible .stats{animation:hero-rise .7s cubic-bezier(.22,1,.36,1) var(--rv-delay) both}
+  .stats-wrap.is-visible .stat{animation:hero-rise .6s cubic-bezier(.22,1,.36,1) calc(var(--rv-delay) + .15s + var(--i) * .08s) both}
+  .stats-wrap.is-visible .badge{animation:pill-pop .5s cubic-bezier(.34,1.56,.64,1) calc(var(--rv-delay) + .3s + var(--i) * .08s) both}
+  .stats-wrap.is-visible .badge-gold path{stroke-dasharray:13;animation:check-draw .45s ease-out calc(var(--rv-delay) + .7s) both}
+
+  /* How it works: the line draws down and each step follows, ending with a ping on the funds step */
+  .steps-line{transform-origin:top}
+  .steps-wrap.is-visible .steps-line{animation:line-grow 1s cubic-bezier(.65,0,.35,1) calc(var(--rv-delay) + .1s) both}
+  .steps-wrap.is-visible .step-node{animation:pill-pop .5s cubic-bezier(.34,1.56,.64,1) calc(var(--rv-delay) + .15s + var(--i) * .25s) both}
+  .steps-wrap.is-visible .step-card{animation:slide-in .6s cubic-bezier(.22,1,.36,1) calc(var(--rv-delay) + .2s + var(--i) * .25s) both}
+  .steps-wrap.is-visible .node-3::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;animation:node-ping 1.4s ease-out calc(var(--rv-delay) + 1.1s) 2}
+
+  /* Bento: cards rise in turn, the payment bar fills, bank chips pop */
+  .bento.is-visible>*{animation:hero-rise .6s cubic-bezier(.22,1,.36,1) calc(var(--rv-delay) + var(--i) * .1s) both}
+  .pay-segments span{transform-origin:left}
+  .bento.is-visible .pay-segments span{animation:seg-grow .45s cubic-bezier(.22,1,.36,1) calc(var(--rv-delay) + .35s + var(--i) * .07s) both}
+  .bento.is-visible .banks li{animation:pill-pop .4s cubic-bezier(.34,1.56,.64,1) calc(var(--rv-delay) + .5s + var(--i) * .04s) both}
+
+  /* Cost rows follow the card; the total counts up (app.js) */
+  .cost.is-visible .cost-rows>div{animation:hero-rise .5s cubic-bezier(.22,1,.36,1) calc(var(--rv-delay) + .2s + var(--i) * .06s) both}
+
+  /* Ratings: stars light up in turn; the numbers count up (app.js) */
+  .ratings.is-visible svg.rating-mid path{animation:star-in .3s ease-out calc(var(--rv-delay) + .3s + var(--i) * .08s) both}
+
+  /* FAQ */
+  .faq.is-visible>details{animation:hero-rise .5s cubic-bezier(.22,1,.36,1) calc(var(--rv-delay) + var(--i) * .07s) both}
+  .faq details[open] p{animation:faq-open .3s ease-out}
+
+  /* Final CTA: content rises, then the button breathes like the hero one (also without JS reveal) */
+  .final.is-visible>*{animation:hero-rise .7s cubic-bezier(.22,1,.36,1) calc(var(--rv-delay) + var(--i) * .1s) both}
+  .final:not(.reveal)>.cta{animation:cta-breathe 2.8s ease-in-out 1.2s infinite}
+  .final.is-visible>.cta{animation:hero-rise .7s cubic-bezier(.22,1,.36,1) calc(var(--rv-delay) + .3s) both,cta-breathe 2.8s ease-in-out calc(var(--rv-delay) + 1.2s) infinite}
+  .final:not(.reveal)>.cta::before,.final.is-visible>.cta::before{animation:cta-glow 2.8s ease-in-out calc(var(--rv-delay,0s) + 1.2s) infinite}
+  .final:not(.reveal)>.cta svg,.final.is-visible>.cta svg{animation:cta-nudge 2.8s ease-in-out calc(var(--rv-delay,0s) + 1.2s) infinite}
+}
+@keyframes check-draw{from{stroke-dashoffset:13}to{stroke-dashoffset:0}}
+@keyframes line-grow{from{scale:1 0}}
+@keyframes slide-in{from{opacity:0;translate:16px 0}}
+@keyframes node-ping{from{box-shadow:0 0 0 0 rgba(184,240,74,.6)}to{box-shadow:0 0 0 14px rgba(184,240,74,0)}}
+@keyframes seg-grow{from{scale:0 1}}
+@keyframes star-in{from{opacity:0}}
+@keyframes faq-open{from{opacity:0;translate:0 -4px}}
 
 /* Very small phones */
 @media (max-width:359px){
