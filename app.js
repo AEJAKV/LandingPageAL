@@ -8,6 +8,9 @@
   var LEAD_VALUE = 1;
   // URL parameters copied onto the application link so attribution survives.
   var PASS_PARAMS = ['aleid', 'alart', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+  // Fallbacks used when the landing URL arrives without its own UTMs, so every
+  // application is attributed to this campaign. Incoming UTMs always win.
+  var DEFAULT_UTMS = { utm_source: 'applovin', utm_medium: 'paid_display', utm_campaign: 'applovin_landing' };
   var COOKIE_NAME = '_axeid';
   var COOKIE_DAYS = 365;
 
@@ -49,6 +52,12 @@
       var val = key === 'aleid' ? aleid : params.get(key);
       if (val && !url.searchParams.has(key)) url.searchParams.set(key, val);
     });
+    Object.keys(DEFAULT_UTMS).forEach(function (key) {
+      if (!url.searchParams.has(key)) url.searchParams.set(key, DEFAULT_UTMS[key]);
+    });
+    // Tag which button was clicked (hero vs final) unless the ad set its own.
+    var cta = link.getAttribute('data-cta');
+    if (cta && !url.searchParams.has('utm_content')) url.searchParams.set('utm_content', cta);
     link.href = url.toString();
   });
 
