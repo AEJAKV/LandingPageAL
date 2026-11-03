@@ -138,9 +138,23 @@
   // ---- 5. Lead event on Apply click -------------------------------------
   // Fires when someone heads to the application. If onyx.goloans.ca can fire
   // generate_lead on submit instead, remove this and use that (more accurate).
-  applyLinks.forEach(function (link) {
-    link.addEventListener('click', function () {
-      track('generate_lead', { currency: 'CAD', value: LEAD_VALUE });
-    });
+  // One delegated listener covers every .js-apply link. On a plain click we
+  // hold navigation for up to NAV_DELAY_MS so the event can leave the page; if
+  // the pixel is missing or blocked, the link opens immediately as normal.
+  var NAV_DELAY_MS = 300;
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest ? e.target.closest('a.js-apply') : null;
+    if (!link) return;
+    track('generate_lead', { currency: 'CAD', value: LEAD_VALUE });
+
+    // New-tab / modified / non-primary clicks keep this page alive: no delay needed.
+    var newTab = e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey ||
+      (link.target && link.target !== '_self');
+    if (e.defaultPrevented || newTab || typeof window.axon !== 'function') return;
+
+    e.preventDefault();
+    if (link.getAttribute('data-navigating')) return;
+    link.setAttribute('data-navigating', '1');
+    setTimeout(function () { window.location.href = link.href; }, NAV_DELAY_MS);
   });
 })();
